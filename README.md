@@ -1,4 +1,4 @@
-# clean-code-python
+# clean-code-julia
 
 ## Table of Contents
   1. [Introduction](#introduction)
@@ -17,28 +17,28 @@
 
 Software engineering principles, from Robert C. Martin's book
 [*Clean Code*](https://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882),
-adapted for Python. This is not a style guide. It's a guide to producing
+adapted for Julia. This is not a style guide. It's a guide to producing
 readable, reusable, and refactorable software in Python.
 
 Not every principle herein has to be strictly followed, and even fewer will be universally 
 agreed upon. These are guidelines and nothing more, but they are ones codified over many 
 years of collective experience by the authors of *Clean Code*.
 
-Inspired from [clean-code-javascript](https://github.com/ryanmcdermott/clean-code-javascript)
+Inspired from [clean-code-python](https://github.com/zedr/clean-code-python)
 
-Targets Python3.7+
+Targets Julia 1.3.1
 
 ## **Variables**
 ### Use meaningful and pronounceable variable names
 
 **Bad:**
-```python
-ymdstr = datetime.date.today().strftime("%y-%m-%d")
+```julia
+ymdstr = Dates.format(now(), "yyyy-mm-dd")
 ```
 
 **Good**:
-```python
-current_date: str = datetime.date.today().strftime("%y-%m-%d")
+```julia
+current_date = Dates.format(now(), "yyyy-mm-dd")
 ```
 **[⬆ back to top](#table-of-contents)**
 
@@ -46,7 +46,7 @@ current_date: str = datetime.date.today().strftime("%y-%m-%d")
 
 **Bad:**
 Here we use three different names for the same underlying entity:
-```python
+```julia
 get_user_info()
 get_client_data()
 get_customer_record()
@@ -54,26 +54,25 @@ get_customer_record()
 
 **Good**:
 If the entity is the same, you should be consistent in referring to it in your functions:
-```python
+```julia
 get_user_info()
 get_user_data()
 get_user_record()
 ```
 
 **Even better**
-Python is (also) an object oriented programming language. If it makes sense, package the functions together with the concrete implementation
-of the entity in your code, as instance attributes, property methods, or methods:
+Julia has multiple dispatch. If it makes sense, package the related data together in a struct and 
+define functions are called with this struct.
 
-```python
-class User:
-    info : str
+```julia
+struct User
+    foo::String
+    bar::Int
+end
 
-    @property
-    def data(self) -> dict:
-        # ...
-
-    def get_record(self) -> Union[Record, None]:
-        # ...
+get_info(user::User)
+get_data(user::User)
+get_record(user::User)
 ```
 
 **[⬆ back to top](#table-of-contents)**
@@ -85,26 +84,26 @@ understanding our program, we hurt our readers.
 Make your names searchable.
 
 **Bad:**
-```python
+```julia
 # What the heck is 86400 for?
-time.sleep(86400);
+sleep(86400);
 ```
 
 **Good**:
-```python
+```julia
 # Declare them in the global namespace for the module.
 SECONDS_IN_A_DAY = 60 * 60 * 24
 
-time.sleep(SECONDS_IN_A_DAY)
+sleep(SECONDS_IN_A_DAY)
 ```
 **[⬆ back to top](#table-of-contents)**
 
 ### Use explanatory variables
 **Bad:**
-```python
-address = 'One Infinite Loop, Cupertino 95014'
-city_zip_code_regex = r'^[^,\\]+[,\\\s]+(.+?)\s*(\d{5})?$'
-matches = re.match(city_zip_code_regex, address)
+```julia
+address = "One Infinite Loop, Cupertino 95014"
+city_zip_code_regex = r"^[^,\\]+[,\\\s]+(.+?)\s*(\d{5})?$"
+matches = match(city_zip_code_regex, address)
 
 save_city_zip_code(matches[1], matches[2])
 ```
@@ -113,24 +112,24 @@ save_city_zip_code(matches[1], matches[2])
 
 It's better, but we are still heavily dependent on regex.
 
-```python
-address = 'One Infinite Loop, Cupertino 95014'
-city_zip_code_regex = r'^[^,\\]+[,\\\s]+(.+?)\s*(\d{5})?$'
-matches = re.match(city_zip_code_regex, address)
+```julia
+address = "One Infinite Loop, Cupertino 95014"
+city_zip_code_regex = r"^[^,\\]+[,\\\s]+(.+?)\s*(\d{5})?$"
+matches = match(city_zip_code_regex, address)
+city, zip_code = matches.captures
 
-city, zip_code = matches.groups()
 save_city_zip_code(city, zip_code)
 ```
 
 **Good**:
 
 Decrease dependence on regex by naming subpatterns.
-```python
-address = 'One Infinite Loop, Cupertino 95014'
-city_zip_code_regex = r'^[^,\\]+[,\\\s]+(?P<city>.+?)\s*(?P<zip_code>\d{5})?$'
-matches = re.match(city_zip_code_regex, address)
+```julia
+address = "One Infinite Loop, Cupertino 95014"
+city_zip_code_regex = r"^[^,\\]+[,\\\s]+(?P<city>.+?)\s*(?P<zip_code>\d{5})?$"
+matches = match(city_zip_code_regex, address)
 
-save_city_zip_code(matches['city'], matches['zip_code'])
+save_city_zip_code(matches["city"], matches["zip_code"])
 ```
 **[⬆ back to top](#table-of-contents)**
 
@@ -139,51 +138,54 @@ Don’t force the reader of your code to translate what the variable means.
 Explicit is better than implicit.
 
 **Bad:**
-```python
-seq = ('Austin', 'New York', 'San Francisco')
+```julia
+seq = "Austin", "New York", "San Francisco"
 
-for item in seq:
+for item in seq
     do_stuff()
     do_some_other_stuff()
     # ...
     # Wait, what's `item` for again?
     dispatch(item)
+end
 ```
 
 **Good**:
-```python
-locations = ('Austin', 'New York', 'San Francisco')
+```julia
+locations = "Austin", "New York", "San Francisco"
 
-for location in locations:
+for location in locations
     do_stuff()
     do_some_other_stuff()
-    # ...
     dispatch(location)
+end
 ```
 **[⬆ back to top](#table-of-contents)**
 
 
 ### Don't add unneeded context
 
-If your class/object name tells you something, don't repeat that in your
+If your struct name tells you something, don't repeat that in your
 variable name.
 
 **Bad:**
 
-```python
-class Car:
-    car_make: str
-    car_model: str
-    car_color: str
+```julia
+struct Car
+    car_make::String
+    car_model::String
+    car_color::String
+end
 ```
 
 **Good**:
 
-```python
-class Car:
-    make: str
-    model: str
-    color: str
+```julia
+struct Car
+    make::String
+    model::String
+    color::String
+end
 ```
 
 **[⬆ back to top](#table-of-contents)**
@@ -194,11 +196,12 @@ class Car:
 
 Why write:
 
-```python
-def create_micro_brewery(name):
-    name = "Hipster Brew Co." if name is None else name
-    slug = hashlib.sha1(name.encode()).hexdigest()
+```julia
+function create_micro_brewery(name=nothing)
+    name = isnothing(name) ? "Hipster Brew Co." : name
+    do_something_with_name(name)
     # etc.
+end
 ```
 
 ... when you can specify a default argument instead? This also makes it clear that
@@ -206,10 +209,11 @@ you are expecting a string as the argument.
 
 **Good**:
 
-```python
-def create_micro_brewery(name: str = "Hipster Brew Co."):
-    slug = hashlib.sha1(name.encode()).hexdigest()
+```julia
+function create_micro_brewery(name="Hipster brew Co.")
+    do_something_with_name(name)
     # etc.
+end
 ```
 
 **[⬆ back to top](#table-of-contents)**
@@ -225,129 +229,52 @@ arguments then your function is trying to do too much. In cases where it's not, 
 of the time a higher-level object will suffice as an argument.
 
 **Bad:**
-```python
-def create_menu(title, body, button_text, cancellable):
+```julia
+function create_menu(title, body, button_text, cancellable)
     # ...
+end
 ```
 
 **Good**:
-```python
-class Menu:
-    def __init__(self, config: dict):
-        title = config["title"]
-        body = config["body"]
-        # ...
+```julia
+struct MenuConfig
+    title::String
+    body::String
+    button_text::String
+    cancellable::Bool
+    
+    MenuConfig(;title, body, button_text, cancellable) = new(title, body, button_text, cancellable)
+end
 
-menu = Menu(
-    {
-        "title": "My Menu",
-        "body": "Something about my menu",
-        "button_text": "OK",
-        "cancellable": False
-    }
+config = MenuConfig(
+    title = "My Menu",
+    body = "Something about my menu",
+    button_text = "OK",
+    cancellable = true,
 )
+
+function create_menu(config::MenuConfig)
+    # ...
+end
 ```
 
 **Also good**
-```python
-class MenuConfig:
-    """A configuration for the Menu.
 
-    Attributes:
-        title: The title of the Menu.
-        body: The body of the Menu.
-        button_text: The text for the button label.
-        cancellable: Can it be cancelled?
-    """
-    title: str
-    body: str
-    button_text: str
-    cancellable: bool = False
+Use keyword arguments instead of positional arguments
 
-
-def create_menu(config: MenuConfig):
-    title = config.title
-    body = config.body
+```julia
+function create_menu(;title, body, button_text, cancellable)
     # ...
-
-
-config = MenuConfig()
-config.title = "My delicious menu"
-config.body = "A description of the various items on the menu"
-config.button_text = "Order now!"
-# The instance attribute overrides the default class attribute.
-config.cancellable = True
-
-create_menu(config)
-```
-
-**Fancy**
-```python
-from typing import NamedTuple
-
-
-class MenuConfig(NamedTuple):
-    """A configuration for the Menu.
-
-    Attributes:
-        title: The title of the Menu.
-        body: The body of the Menu.
-        button_text: The text for the button label.
-        cancellable: Can it be cancelled?
-    """
-    title: str
-    body: str
-    button_text: str
-    cancellable: bool = False
-
-
-def create_menu(config: MenuConfig):
-    title, body, button_text, cancellable = config
-    # ...
-
+end
 
 create_menu(
-    MenuConfig(
-        title="My delicious menu",
-        body="A description of the various items on the menu",
-        button_text="Order now!"
-    )
+    title = "My Menu",
+    body = "Something about my menu",
+    button_text = "OK",
+    cancellable = true,
 )
 ```
 
-**Even fancier**
-```python
-from dataclasses import astuple, dataclass
-
-
-@dataclass
-class MenuConfig:
-    """A configuration for the Menu.
-
-    Attributes:
-        title: The title of the Menu.
-        body: The body of the Menu.
-        button_text: The text for the button label.
-        cancellable: Can it be cancelled?
-    """
-    title: str
-    body: str
-    button_text: str
-    cancellable: bool = False
-
-def create_menu(config: MenuConfig):
-    title, body, button_text, cancellable = astuple(config)
-    # ...
-
-
-create_menu(
-    MenuConfig(
-        title="My delicious menu",
-        body="A description of the various items on the menu",
-        button_text="Order now!"
-    )
-)
-```
 
 **[⬆ back to top](#table-of-contents)**
 
@@ -359,48 +286,35 @@ cleaner. If you take nothing else away from this guide other than this, you'll b
 of many developers.
 
 **Bad:**
-```python
+```julia
 
-def email_clients(clients: List[Client]):
-    """Filter active clients and send them an email.
-    """
-    for client in clients:
+function email_clients(clients::Array{Client})
+    # Filter active clients and send them an email.
+
+    for client in clients
         if client.active:
             email(client)
+        end
+    end
+end
 ```
 
 **Good**:
-```python
-def get_active_clients(clients: List[Client]) -> List[Client]:
-    """Filter active clients.
-    """
-    return [client for client in clients if client.active]
+```julia
+function get_active_clients(clients::Array{Client})::Array{Client}
+    # Filter active clients.
 
+    filter(client->client.active, clients)
+end
 
-def email_clients(clients: List[Client, ...]) -> None:
-    """Send an email to a given list of clients.
-    """
-    for client in clients:
+function email_clients(clients::Array{Client})
+    # Send an email to a given list of clients.
+
+    for client in clients
         email(client)
+    end
+end
 ```
-
-Do you see an opportunity for using generators now?
-
-**Even better**
-```python
-def active_clients(clients: List[Client]) -> Generator[Client]:
-    """Only active clients.
-    """
-    return (client for client in clients if client.active)
-
-
-def email_client(clients: Iterator[Client]) -> None:
-    """Send an email to a given list of clients.
-    """
-    for client in clients:
-        email(client)
-```
-
 
 **[⬆ back to top](#table-of-contents)**
 
@@ -408,26 +322,33 @@ def email_client(clients: Iterator[Client]) -> None:
 
 **Bad:**
 
-```python
-class Email:
-    def handle(self) -> None:
-        # Do something...
+```julia
+struct Email
+    # ...
+end
+
+function handle(email::Email)
+    # Do something...
+end
 
 message = Email()
 # What is this supposed to do again?
-message.handle()
+handle(message)
 ```
 
 **Good:**
 
-```python
-class Email:
-    def send(self) -> None:
-        """Send this message.
-        """
+```julia
+struct Email
+    # ...
+end
+
+function send(email::Email)
+    # Send the email
+end
 
 message = Email()
-message.send()
+send(message)
 ```
 
 **[⬆ back to top](#table-of-contents)**
@@ -439,59 +360,73 @@ much. Splitting up functions leads to reusability and easier testing.
 
 **Bad:**
 
-```python
-def parse_better_js_alternative(code: str) -> None:
+```julia
+function parse_better_js_alternative(code::String)
     regexes = [
         # ...
     ]
 
-    statements = regexes.split()
+    statements = split(code)
     tokens = []
-    for regex in regexes:
-        for statement in statements:
+
+    for regex in regexes
+        for statement in statements
             # ...
+        end
+    end
 
     ast = []
-    for token in tokens:
+    for token in tokens
         # Lex.
+    end
 
-    for node in ast:
+    for node in ast
         # Parse.
+    end
+end
 ```
 
 **Good:**
 
-```python
+```julia
 
-REGEXES = (
+REGEXES = [
    # ...
-)
+]
 
 
-def parse_better_js_alternative(code: str) -> None:
+function parse_better_js_alternative(code::String)
     tokens = tokenize(code)
     syntax_tree = parse(tokens)
 
-    for node in syntax_tree:
+    for node in syntax_tree
         # Parse.
+    end
+end
 
-
-def tokenize(code: str) -> list:
-    statements = code.split()
+function tokenize(code::String)
+    statements = split(code)
     tokens = []
-    for regex in REGEXES:
+
+    for regex in REGEXES
         for statement in statements:
            # Append the statement to tokens.
+        end
+    end
 
-    return tokens
+    tokens
+end
 
 
-def parse(tokens: list) -> list:
+function parse(tokens::Array)::Array
     syntax_tree = []
-    for token in tokens:
-        # Append the parsed token to the syntax tree.
 
-    return syntax_tree
+    for token in tokens
+        # Append the parsed token to the syntax tree.
+    end
+
+    syntax_tree
+end
 ```
 
 **[⬆ back to top](#table-of-contents)**
@@ -504,26 +439,27 @@ paths based on a boolean.
 
 **Bad:**
 
-```python
-from pathlib import Path
+```julia
 
-def create_file(name: str, temp: bool) -> None:
-    if temp:
-        Path('./temp/' + name).touch()
+function create_file(name::String, temp::Bool)
+    if temp
+        touch("./temp/$(name)")
     else:
-        Path(name).touch()
+        touch(name)
+    end
 ```
 
 **Good:**
 
-```python
-from pathlib import Path
+```julia
 
-def create_file(name: str) -> None:
-    Path(name).touch()
+function create_file(name::String)
+    touch(name)
+end
 
-def create_temp_file(name: str) -> None:
-    Path('./temp/' + name).touch()
+function create_temp_file(name::String)
+    touch("./temp/$(name)")
+end
 ```
 
 **[⬆ back to top](#table-of-contents)**
@@ -548,18 +484,19 @@ If you can do this, you will be happier than the vast majority of other programm
 
 **Bad:**
 
-```python
+```julia
 # This is a module-level name.
 # It's good practice to define these as immutable values, such as a string.
 # However...
-name = 'Ryan McDermott'
+name = "Ryan McDermott"
 
-def split_into_first_and_last_name() -> None:
+function split_into_first_and_last_name()
     # The use of the global keyword here is changing the meaning of the
     # the following line. This function is now mutating the module-level
     # state and introducing a side-effect!
     global name
-    name = name.split()
+    name = split(name)
+end
 
 split_into_first_and_last_name()
 
@@ -570,40 +507,23 @@ print(name)  # ['Ryan', 'McDermott']
 ```
 
 **Good:**
-```python
-def split_into_first_and_last_name(name: str) -> list:
-    return name.split()
+```julia
+function split_into_first_and_last_name(name::String)
+    split(name)
+end
 
-name = 'Ryan McDermott'
+name = "Ryan McDermott"
 new_name = split_into_first_and_last_name(name)
 
-print(name)  # 'Ryan McDermott'
-print(new_name)  # ['Ryan', 'McDermott']
-```
-
-**Also good**
-```python
-from dataclasses import dataclass
-
-@dataclass
-class Person:
-    name: str
-
-    @property
-    def name_as_first_and_last(self) -> list:
-        return self.name.split() 
-
-# The reason why we create instances of classes is to manage state!
-person = Person('Ryan McDermott')
-print(person.name)  # 'Ryan McDermott'
-print(person.name_as_first_and_last)  # ['Ryan', 'McDermott']
+print(name)  # "Ryan McDermott"
+print(new_name)  # ["Ryan", "McDermott"]
 ```
 
 **[⬆ back to top](#table-of-contents)**
 
 ## **Objects and Data Structures**
 
-*Coming soon*
+*TBD*
 
 **[⬆ back to top](#table-of-contents)**
 
@@ -615,13 +535,12 @@ print(person.name_as_first_and_last)  # ['Ryan', 'McDermott']
 ### **Interface Segregation Principle (ISP)**
 ### **Dependency Inversion Principle (DIP)**
 
-*Coming soon*
+*TBD*
 
 **[⬆ back to top](#table-of-contents)**
 
 ## **Don't repeat yourself (DRY)**
 
-*Coming soon*
+*TBD*
 
 **[⬆ back to top](#table-of-contents)**
-
