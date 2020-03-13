@@ -4,14 +4,7 @@
   1. [Introduction](#introduction)
   2. [Variables](#variables)
   3. [Functions](#functions)
-  4. [Objects and Data Structures](#objects-and-data-structures)
-  5. [Classes](#classes)
-     1. [S: Single Responsibility Principle (SRP)](#single-responsibility-principle-srp)
-     2. [O: Open/Closed Principle (OCP)](#openclosed-principle-ocp)
-     3. [L: Liskov Substitution Principle (LSP)](#liskov-substitution-principle-lsp)
-     4. [I: Interface Segregation Principle (ISP)](#interface-segregation-principle-isp)
-     5. [D: Dependency Inversion Principle (DIP)](#dependency-inversion-principle-dip)
-  6. [Don't repeat yourself (DRY)](#dont-repeat-yourself-dry)
+  4. [Don't repeat yourself (DRY)](#dont-repeat-yourself-dry)
 
 ## Introduction
 
@@ -518,24 +511,6 @@ new_name = split_into_first_and_last_name(name)
 print(name)  # "Ryan McDermott"
 print(new_name)  # ["Ryan", "McDermott"]
 ```
-
-**[⬆ back to top](#table-of-contents)**
-
-## **Objects and Data Structures**
-
-*TBD*
-
-**[⬆ back to top](#table-of-contents)**
-
-## **Classes**
-
-### **Single Responsibility Principle (SRP)**
-### **Open/Closed Principle (OCP)**
-### **Liskov Substitution Principle (LSP)**
-### **Interface Segregation Principle (ISP)**
-### **Dependency Inversion Principle (DIP)**
-
-*TBD*
 
 **[⬆ back to top](#table-of-contents)**
 
